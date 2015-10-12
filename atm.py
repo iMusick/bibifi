@@ -122,8 +122,11 @@ except (socket.error, socket.timeout) as e:
 	s.close()
 	print '632'
 	sys.exit(0)
-
-json_obj2 = json.loads(fernet_obj.decrypt(json_string2))
+try:
+	json_obj2 = json.loads(fernet_obj.decrypt(json_string2))
+except:
+	s.close()
+	sys.exit(255)
 '''authenticate failure'''
 if(json_obj2['counter'] != token+1):
 	print '255'
