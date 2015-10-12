@@ -6,10 +6,14 @@ import random
 import re
 import sys
 import socket
-import os.path
+import os
+import signal
 
 BUFFER_SIZE = 1024
 
+
+def handler(signum, frame):
+    sys.exit(0)
 
 
 def parse_money(money_string):
@@ -153,6 +157,8 @@ def handle_request(f, conn, counter, accounts):
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGTERM, handler)
+    signal.signal(signal.SIGINT, handler)
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--port", help="port number", default=3000, type=int)
     parser.add_argument("-s", "--auth_file", help="auth file", nargs='?')
