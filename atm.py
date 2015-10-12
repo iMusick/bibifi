@@ -40,7 +40,10 @@ if args.getinfo == False:
 	if re.match("(0|[1-9][0-9]*).[0-9][0-9]", amount):
 		amount_parts = amount.split(".")
 		num1 = long(amount_parts[0])
-		if(num1 > 4294967295 or num1 < 0):
+		if args.balance != None and num1 < 10:
+			print '25510'
+			sys.exit(0)
+		if(num1 > 4294967295 or num1 <= 0):
 			print '2551'
 			sys.exit(0)
 	else:
@@ -50,24 +53,36 @@ if args.getinfo == False:
 ''' open auth file to get the secret_key, open card file to get the card number'''
 try:
 	f_auth = open(args.authfile,'rb')
-	'''
-	if args.balance != None and args.getinfo == False:
-		print '1'
-		f_card = open(args.cardfile,'rb')
-	'''
 except IOError as e:
-	print args.authfile
-	print args.cardfile
-	print "2553"
+	print '25530'
 	sys.exit(0)
+
+fcardfound = False
+try:
+	f_card = open(args.cardfile,'rb')
+	fcardfound = True	
+except IOError as e:
+	print args.cardfile
+	if args.balance != None:
+		f_card = open(args.cardfile,'wb+')
+	else:
+		print "2553"
+		sys.exit(0)
+
+if args.balance != None and fcardfound == True:
+	print '25532'
+	sys.exit(0)
+
 secret_key = f_auth.read().strip()
 f_auth.close()
-'''
-if args.balance != None and args.getinfo == False:
+
+card_num = ""
+if args.balance == None:
 	card_num = f_card.read().strip()
 	f_card.close()
-'''
-#print secret_key
+
+print secret_key
+
 
 '''generate a random number for authentication with bank'''
 token = int(math.ceil(random.random()*10000000))
@@ -81,59 +96,70 @@ elif args.withdraw != None:
 else:
 	operation = 'getinfo'
 
-'''generate json format of request'''
-json_auth={'counter':token}
-json_obj={'counter':token+2, 'card_number':12342, 'operation':operation, 'amount':amount, 'name': args.account}
-auth_string = json.dumps(json_auth)
-json_string = json.dumps(json_obj)
-#print json_string
 
 '''encryption'''
 fernet_obj = Fernet(secret_key)
-ciphertext = fernet_obj.encrypt(auth_string)
-#print ciphertext
 
-'''send request through socket'''
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(("127.0.0.1",3000))
+
+s.settimeout(10)
 try:
-    s.send(ciphertext)
-    ciphertext = s.recv(BUFFER_SIZE)
-    data = fernet_obj.decrypt(ciphertext)
-    response = json.loads(data)
-    print "response 1: " + json.dumps(response)
-    ciphertext = fernet_obj.encrypt(json_string)
-    s.send(ciphertext)
-    ciphertext = s.recv(BUFFER_SIZE)
-#    print ciphertext
-    data = fernet_obj.decrypt(ciphertext)
-    response = json.loads(data)
-    print "response 2: " + json.dumps(response)
-    s.close()
-except:
-    s.close()
+	s.connect((args.ip,args.port))
+except (socket.error, socket.timeout) as e:
+	s.close()
+	print '630'
+	sys.exit(0)
 
-'''
-print 'authfile= ', args.authfile
-print 'ip= ', args.ip
-if args.cardfile == None:
-	args.cardfile = args.account+".card"
-print 'cardfile= ', args.cardfile
-print 'account= ', args.account
-print 'deposit= ', args.deposit
-print 'withdraw= ', args.withdraw
-print 'getinfo=', args.getinfo
-print 'balance= ', args.balance
+json_obj1 = {'counter':token}
+json_string1 = json.dumps(json_obj1)
+try:
+	s.send(fernet_obj.encrypt(json_string1))
+except (socket.error, socket.timeout) as e:
+	s.close()
+	print '631'
+	sys.exit(0)
+
+try:
+	json_string2 = s.recv(1024)
+except (socket.error, socket.timeout) as e:
+	s.close()
+	print '632'
+	sys.exit(0)
+
+json_obj2 = json.load(fernet_obj.decrypt(json_string2))
+'''authenticate failure'''
+if(json_obj2['counter'] != token+1):
+	print '255'
+	s.close()
+	sys.exit(0)
+
+son_obj3={'counter':token+2, 'card_number':card_num, 'operation':operation, 'amount':amount, 'name': args.account}
+json_string3 = json.dumps(json_obj3)
+
+try:
+	s.send(fernet_obj.encrypt(json_string3))
+except (socket.error, socket.timeout) as e:
+	print '633'
+	sys.exit(0)
+
+try:
+	json_string4 = s.recv(1024)
+except (socket.error, socket.timeout) as e:
+	s.close()
+	print '634'
+	sys.exit(0)
+
+json_obj4 = json.load(fernet_obj.decrypt(json_string4))
+if(json_obj4['counter'] != token+3):
+	print '255'
+	s.close()
+	sys.exit(0)
+print json_obj4
+if args.balance != None:
+	f_card.write(json_obj4['card_num'])
+	f_card.close()
+
+s.close()
 
 
-
-import argparse
-
-parser = argparse.ArgumentParser()
-
-parser.add_argument('-s', action='store', dest='authfile',default="bank.auth",
-                    help='authentication file')
-
-results = parser.parse_args()
-print 'simple_value     =', results.authfile
-'''
+'''json_result = {json_obj4['operation']:json_obj4['amount'], 'account':args.account}'''
