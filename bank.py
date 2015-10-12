@@ -19,17 +19,24 @@ def parse_money(money_string):
     return amount
 
 class Account:
-    def __init__(self, name, balance):
-        self.card_number = random.randint(1000000, 9999999)
-        self.name = name
+    def __init__(self, name, balance, card_number):
+        
+        self.card_number = 0
 
+        if(card_number):
+            self.card_number = card_number
+        else:
+            self.card_number = random.randint(1000000, 9999999)
+
+        self.name = name
+        
         amount = parse_money(balance)
 
         self.dollars = amount[0]
         self.cents   = amount[1]
         
     def withdraw(self, amount_string):
-        amount = parse(money(amount_string))
+        amount = parse_money(amount_string)
         if(amount[0] < self.dollars):
             self.dollars -= amount[0]
             self.cents -= amount[1]
@@ -42,7 +49,7 @@ class Account:
 
         elif((amount[0] == self.dollars) and (amount[1] <= self.cents)):
             self.dollars -= amount[0]
-            self.cents -= amout[1]
+            self.cents -= amount[1]
             return amount
 
         else:
@@ -50,15 +57,15 @@ class Account:
 
     def deposit(self, amount_string):
         amount = parse_money(amount_string)
-        self.dollars += amount()
-        self.cents   += amount()
+        self.dollars += amount[0]
+        self.cents   += amount[1]
         
         if(self.cents >= 100):
             self.dollars += 1
             self.cents   -= 100
 
-    def get_balance():
-        balance_string = self.dollars + '.' + self.cents
+    def get_balance(self):
+        balance_string = str(self.dollars) + '.' + str(self.cents)
         return balance_string
 
 
@@ -85,7 +92,7 @@ def create(accounts, card_number, name, amount):
                 response = {'success': False}
         
         if(response['success']):
-            account = Account(name, amount)
+            account = Account(name, amount, card_number)
             accounts[account.card_number] = account
             response['summary'] = {'account':name, 'initial_balance': amount}
             response['card_number'] = account.card_number
@@ -103,7 +110,7 @@ def withdraw(account, amount):
         response = {'success': True, 'summary': {'account': account.name, 'withdraw': amount}}
         return response
     else:
-        response = {'success': Fales}
+        response = {'success': False}
         return response
 
 def getinfo(account):
@@ -195,7 +202,10 @@ if __name__ == '__main__':
         if(response):
             ciphertext = f.encrypt(json.dumps(response))
             conn.send(ciphertext)
-            print json.dumps(response['summary'])
+            try:
+                print json.dumps(response['summary'])
+            except KeyError:
+                continue
 
 
 

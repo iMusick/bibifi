@@ -67,7 +67,7 @@ if args.balance != None and args.getinfo == False:
 	card_num = f_card.read().strip()
 	f_card.close()
 '''
-print secret_key
+#print secret_key
 
 '''generate a random number for authentication with bank'''
 token = int(math.ceil(random.random()*10000000))
@@ -86,30 +86,32 @@ json_auth={'counter':token}
 json_obj={'counter':token+2, 'card_number':12342, 'operation':operation, 'amount':amount, 'name': args.account}
 auth_string = json.dumps(json_auth)
 json_string = json.dumps(json_obj)
-print json_string
+#print json_string
 
 '''encryption'''
 fernet_obj = Fernet(secret_key)
 ciphertext = fernet_obj.encrypt(auth_string)
-print ciphertext
+#print ciphertext
 
 '''send request through socket'''
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(("127.0.0.1",3000))
-s.send(ciphertext)
-ciphertext = s.recv(BUFFER_SIZE)
-data = fernet_obj.decrypt(ciphertext)
-response = json.loads(data)
-print "response 1: " + json.dumps(response)
-ciphertext = fernet_obj.encrypt(json_string)
-s.send(ciphertext)
-ciphertext = s.recv(BUFFER_SIZE)
-print ciphertext
-data = fernet_obj.decrypt(ciphertext)
-response = json.loads(data)
-print "response 2: " + json.dumps(response)
-
-s.close()
+try:
+    s.send(ciphertext)
+    ciphertext = s.recv(BUFFER_SIZE)
+    data = fernet_obj.decrypt(ciphertext)
+    response = json.loads(data)
+    print "response 1: " + json.dumps(response)
+    ciphertext = fernet_obj.encrypt(json_string)
+    s.send(ciphertext)
+    ciphertext = s.recv(BUFFER_SIZE)
+#    print ciphertext
+    data = fernet_obj.decrypt(ciphertext)
+    response = json.loads(data)
+    print "response 2: " + json.dumps(response)
+    s.close()
+except:
+    s.close()
 
 
 '''
