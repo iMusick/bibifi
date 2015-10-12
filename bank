@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 from cryptography.fernet import Fernet
 import argparse
 import json
@@ -121,21 +122,25 @@ def getinfo(account):
 
 def handle_request(f, conn, counter, accounts):
     ciphertext = conn.recv(BUFFER_SIZE)
-    try:
-        data = f.decrypt(ciphertext)
-        request = json.loads(data)
-        
-        if(request['counter'] != counter + 2):
-            return 0
-        
-        account = null
+    #try:
+    data = f.decrypt(ciphertext)
+    request = json.loads(data)
 
-        if(request['operation'] == "create"): 
-            response = create(accounts, request['name'], request['amount'])
-        else:
-            account = accounts[request['card_number']]
-            if(account['name'] != request['name']):
-                return 0
+    print request
+    
+    if(request['counter'] != counter + 2):
+        print "1"
+        return 0
+    
+    account = None
+
+    if(request['operation'] == "create"): 
+        response = create(accounts, request['name'], request['amount'])
+    else:
+        account = accounts[int(request['card_number'])]
+        if(account.name != request['name']):
+            print "2"
+            return 0
 
         if(request['operation'] == "deposit"):
             response = deposit(account, request['amount'])
@@ -144,12 +149,15 @@ def handle_request(f, conn, counter, accounts):
             response = withdraw(account, request['amount'])
 
         elif(request['operation'] == "getinfo"):
+            print "5"
             response = getinfo(account)
 
         else:
+            print "3"
             return 0
-    except:
-        return 0
+    #except Exception as e:
+    #    print sys.exc_info()[0]
+    #    return 0
 
     response['counter'] = counter + 3
     return response
@@ -212,15 +220,15 @@ if __name__ == '__main__':
                 try:
                     conn.send(ciphertext)
                 except:
-                    print "protocol_error"
+                    print "protocol_error1"
                     continue
                 try:
                     print json.dumps(response['summary'])
                 except KeyError:
                     continue
             else:
-                print "protocol_error"
+                print "protocol_error2"
         else:
-            print "protocol_error"
+            print "protocol_error3"
 
 
