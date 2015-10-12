@@ -131,7 +131,6 @@ def handle_request(f, conn, counter, accounts):
         request = json.loads(data)
         
         if(request['counter'] != counter + 2):
-            print "protocol_error"
             return 0
         
         
@@ -197,7 +196,7 @@ if __name__ == '__main__':
 
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+    s.settimeout(10)
     s.bind(('', args.port))
     s.listen(1)
 
@@ -208,14 +207,18 @@ if __name__ == '__main__':
             response = handle_request(f, conn, counter, accounts)
             if(response):
                 ciphertext = f.encrypt(json.dumps(response))
-                conn.send(ciphertext)
+                try:
+                    conn.send(ciphertext)
+                except:
+                    print "protocol_error"
+                    continue
                 try:
                     print json.dumps(response['summary'])
                 except KeyError:
                     continue
             else:
-                print("protocol_error")
+                print "protocol_error"
         else:
-            print("protocol_error")
+            print "protocol_error"
 
 
