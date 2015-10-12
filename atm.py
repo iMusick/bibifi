@@ -126,14 +126,14 @@ except (socket.error, socket.timeout) as e:
 	print '632'
 	sys.exit(0)
 
-json_obj2 = json.load(fernet_obj.decrypt(json_string2))
+json_obj2 = json.loads(fernet_obj.decrypt(json_string2))
 '''authenticate failure'''
 if(json_obj2['counter'] != token+1):
 	print '255'
 	s.close()
 	sys.exit(0)
 
-son_obj3={'counter':token+2, 'card_number':card_num, 'operation':operation, 'amount':amount, 'name': args.account}
+json_obj3={'counter':token+2, 'card_number':card_num, 'operation':operation, 'amount':amount, 'name': args.account}
 json_string3 = json.dumps(json_obj3)
 
 try:
@@ -149,16 +149,20 @@ except (socket.error, socket.timeout) as e:
 	print '634'
 	sys.exit(0)
 
-json_obj4 = json.load(fernet_obj.decrypt(json_string4))
+json_obj4 = json.loads(fernet_obj.decrypt(json_string4))
 if(json_obj4['counter'] != token+3):
+	print '255'
+	s.close()
+	sys.exit(0)
+if(json_obj4['success'] == False):
 	print '255'
 	s.close()
 	sys.exit(0)
 print json_obj4
 if args.balance != None:
-	f_card.write(json_obj4['card_num'])
+	f_card.write(str(json_obj4['card_number']))
 	f_card.close()
-
+print json.dumps(json_obj4['summary'])
 s.close()
 
 
