@@ -72,11 +72,14 @@ class Account:
 
 def authenticate(f, conn):
     ciphertext = conn.recv(BUFFER_SIZE)
-    data = f.decrypt(ciphertext)
-    request = json.loads(data)
-    counter = request['counter']
-    conn.send(f.encrypt(json.dumps({'counter' : counter + 1})))
-    return counter
+    try:
+        data = f.decrypt(ciphertext)
+        request = json.loads(data)
+        counter = request['counter']
+        conn.send(f.encrypt(json.dumps({'counter' : counter + 1})))
+        return counter
+    except:
+        return 0
 
 def create(accounts, card_number, name, amount):
     
@@ -123,30 +126,33 @@ def getinfo(account):
 
 def handle_request(f, conn, counter, accounts):
     ciphertext = conn.recv(BUFFER_SIZE)
-    data = f.decrypt(ciphertext)
-    request = json.loads(data)
-    
-    if(request['counter'] != counter + 2):
-        print "protocol_error"
-        return 0
-    
-    
-    if(request['operation'] == "create"): 
-        response = create(accounts, request['card_number'], request['name'], request['amount'])
+    try:
+        data = f.decrypt(ciphertext)
+        request = json.loads(data)
+        
+        if(request['counter'] != counter + 2):
+            print "protocol_error"
+            return 0
+        
+        
+        if(request['operation'] == "create"): 
+            response = create(accounts, request['card_number'], request['name'], request['amount'])
 
-    elif(request['operation'] == "deposit"):
-        account = accounts[request['card_number']]
-        response = deposit(account, request['amount'])
+        elif(request['operation'] == "deposit"):
+            account = accounts[request['card_number']]
+            response = deposit(account, request['amount'])
 
-    elif(request['operation'] == "withdraw"):
-        account = accounts[request['card_number']]
-        response = withdraw(account, request['amount'])
+        elif(request['operation'] == "withdraw"):
+            account = accounts[request['card_number']]
+            response = withdraw(account, request['amount'])
 
-    elif(request['operation'] == "getinfo"):
-        account = accounts[request['card_number']]
-        response = getinfo(account)
+        elif(request['operation'] == "getinfo"):
+            account = accounts[request['card_number']]
+            response = getinfo(account)
 
-    else:
+        else:
+            return 0
+    except:
         return 0
 
     response['counter'] = counter + 3
@@ -198,14 +204,18 @@ if __name__ == '__main__':
     while True:
         conn, addr = s.accept()
         counter = authenticate(f, conn) 
-        response = handle_request(f, conn, counter, accounts)
-        if(response):
-            ciphertext = f.encrypt(json.dumps(response))
-            conn.send(ciphertext)
-            try:
-                print json.dumps(response['summary'])
-            except KeyError:
-                continue
-
+        if(counter):
+            response = handle_request(f, conn, counter, accounts)
+            if(response):
+                ciphertext = f.encrypt(json.dumps(response))
+                conn.send(ciphertext)
+                try:
+                    print json.dumps(response['summary'])
+                except KeyError:
+                    continue
+            else:
+                print("protocol_error")
+        else:
+            print("protocol_error")
 
 

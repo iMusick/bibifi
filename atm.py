@@ -113,7 +113,6 @@ try:
 except:
     s.close()
 
-
 '''
 print 'authfile= ', args.authfile
 print 'ip= ', args.ip
