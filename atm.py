@@ -78,7 +78,7 @@ f_auth.close()
 
 card_num = ""
 if args.balance == None:
-	card_num = f_card.read().strip()
+	card_num = int(f_card.read().strip())
 	f_card.close()
 
 print secret_key
@@ -135,7 +135,7 @@ if(json_obj2['counter'] != token+1):
 
 json_obj3={'counter':token+2, 'card_number':card_num, 'operation':operation, 'amount':amount, 'name': args.account}
 json_string3 = json.dumps(json_obj3)
-
+print json_string3
 try:
 	s.send(fernet_obj.encrypt(json_string3))
 except (socket.error, socket.timeout) as e:
