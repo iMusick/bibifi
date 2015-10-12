@@ -20,14 +20,9 @@ def parse_money(money_string):
     return amount
 
 class Account:
-    def __init__(self, name, balance, card_number):
+    def __init__(self, name, balance):
         
-        self.card_number = 0
-
-        if(card_number):
-            self.card_number = card_number
-        else:
-            self.card_number = random.randint(1000000, 9999999)
+        self.card_number = random.randint(1000000, 9999999)
 
         self.name = name
         
@@ -82,24 +77,19 @@ def authenticate(f, conn):
     except:
         return 0
 
-def create(accounts, card_number, name, amount):
+def create(accounts, name, amount):
     
-    response = {'success':False}
+    response = {'success':True}
 
-    try:
-        account = accounts[card_number]
-    except KeyError:
-        response['success'] = True
-
-        for key in accounts:
-            if(accounts[key].name == name):
-                response = {'success': False}
-        
-        if(response['success']):
-            account = Account(name, amount, card_number)
-            accounts[account.card_number] = account
-            response['summary'] = {'account':name, 'initial_balance': amount}
-            response['card_number'] = account.card_number
+    for key in accounts:
+        if(accounts[key].name == name):
+            response = {'success': False}
+    
+    if(response['success']):
+        account = Account(name, amount)
+        accounts[account.card_number] = account
+        response['summary'] = {'account':name, 'initial_balance': amount}
+        response['card_number'] = account.card_number
 
     return response
     
@@ -137,7 +127,7 @@ def handle_request(f, conn, counter, accounts):
         account = null
 
         if(request['operation'] == "create"): 
-            response = create(accounts, request['card_number'], request['name'], request['amount'])
+            response = create(accounts, request['name'], request['amount'])
         else:
             account = accounts[request['card_number']]
             if(account['name'] != request['name']):
@@ -189,7 +179,8 @@ if __name__ == '__main__':
             auth_file_name = args.auth_file
     else:
         auth_file_name = "bank.auth"
-
+    
+    print "created"
     key = Fernet.generate_key()
     auth_file = open(auth_file_name, 'wb')
     auth_file.write(key)
