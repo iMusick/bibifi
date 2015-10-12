@@ -7,6 +7,10 @@ import random
 import math
 import json
 
+
+BUFFER_SIZE = 1024
+
+
 parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()
 parser.add_argument("-s",help = "authentication file",action = "store", dest='authfile', default="bank.auth")
@@ -79,6 +83,7 @@ if args.balance == None:
 
 print secret_key
 
+
 '''generate a random number for authentication with bank'''
 token = int(math.ceil(random.random()*10000000))
 operation = ""
@@ -96,6 +101,7 @@ else:
 fernet_obj = Fernet(secret_key)
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 s.settimeout(10)
 try:
 	s.connect((args.ip,args.port))
@@ -154,5 +160,6 @@ if args.balance != None:
 	f_card.close()
 
 s.close()
+
 
 '''json_result = {json_obj4['operation']:json_obj4['amount'], 'account':args.account}'''
