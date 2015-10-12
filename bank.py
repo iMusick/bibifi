@@ -196,12 +196,12 @@ if __name__ == '__main__':
 
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(10)
     s.bind(('', args.port))
     s.listen(1)
 
     while True:
         conn, addr = s.accept()
+        conn.settimeout(10)
         counter = authenticate(f, conn) 
         if(counter):
             response = handle_request(f, conn, counter, accounts)
