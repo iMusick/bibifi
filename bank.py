@@ -98,6 +98,7 @@ def create(accounts, card_number, name, amount):
             account = Account(name, amount)
             accounts[account.card_number] = account
             response['summary'] = {'account':name, 'initial_balance': amount}
+            response['card_number'] = account.card_number
 
     return response
     
