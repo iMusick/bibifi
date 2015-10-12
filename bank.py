@@ -6,6 +6,7 @@ import random
 import re
 import sys
 import socket
+import os.path
 
 BUFFER_SIZE = 1024
 
@@ -133,20 +134,22 @@ def handle_request(f, conn, counter, accounts):
         if(request['counter'] != counter + 2):
             return 0
         
-        
+        account = null
+
         if(request['operation'] == "create"): 
             response = create(accounts, request['card_number'], request['name'], request['amount'])
-
-        elif(request['operation'] == "deposit"):
+        else:
             account = accounts[request['card_number']]
+            if(account['name'] != request['name']):
+                return 0
+
+        if(request['operation'] == "deposit"):
             response = deposit(account, request['amount'])
 
         elif(request['operation'] == "withdraw"):
-            account = accounts[request['card_number']]
             response = withdraw(account, request['amount'])
 
         elif(request['operation'] == "getinfo"):
-            account = accounts[request['card_number']]
             response = getinfo(account)
 
         else:
@@ -162,7 +165,7 @@ def handle_request(f, conn, counter, accounts):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--port", help="port number", default=3000, type=int)
-    parser.add_argument("-s", "--auth_file", help="auth file", nargs='?', default="bank.auth")
+    parser.add_argument("-s", "--auth_file", help="auth file", nargs='?')
 
     args = parser.parse_args()
 
@@ -176,6 +179,8 @@ if __name__ == '__main__':
 
 
     if args.auth_file:
+        if os.path.isfile(args.auth_file):
+            sys.exit(255)
         if not ( pattern.match(args.auth_file)):
             ArgumentParser.print_help()
             print "file name must match [_\-\.0-9a-z]{1,255}"
