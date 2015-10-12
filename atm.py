@@ -63,11 +63,8 @@ try:
 	fcardfound = True	
 except IOError as e:
 	print args.cardfile
-	if args.balance != None:
-		f_card = open(args.cardfile,'wb+')
-	else:
-		print "2553"
-		sys.exit(0)
+	print "2553"
+	sys.exit(0)
 
 if args.balance != None and fcardfound == True:
 	print '25532'
@@ -76,7 +73,7 @@ if args.balance != None and fcardfound == True:
 secret_key = f_auth.read().strip()
 f_auth.close()
 
-card_num = ""
+card_num = 0
 if args.balance == None:
 	card_num = int(f_card.read().strip())
 	f_card.close()
@@ -160,6 +157,7 @@ if(json_obj4['success'] == False):
 	sys.exit(0)
 print json_obj4
 if args.balance != None:
+	f_card = open(args.cardfile,'wb+')
 	f_card.write(str(json_obj4['card_number']))
 	f_card.close()
 print json.dumps(json_obj4['summary'])
