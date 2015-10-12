@@ -7,6 +7,10 @@ import random
 import math
 import json
 
+
+BUFFER_SIZE = 1024
+
+
 parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()
 parser.add_argument("-s",help = "authentication file",action = "store", dest='authfile', default="bank.auth")
@@ -78,19 +82,33 @@ else:
 	operation = 'getinfo'
 
 '''generate json format of request'''
-json_obj={'counter':token, 'card_number':"fafaff", 'operation':operation, 'amount':amount, 'name': args.account}
+json_auth={'counter':token}
+json_obj={'counter':token+2, 'card_number':12342, 'operation':operation, 'amount':amount, 'name': args.account}
+auth_string = json.dumps(json_auth)
 json_string = json.dumps(json_obj)
 print json_string
 
 '''encryption'''
 fernet_obj = Fernet(secret_key)
-ciphertext = fernet_obj.encrypt(json_string)
+ciphertext = fernet_obj.encrypt(auth_string)
 print ciphertext
 
 '''send request through socket'''
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(("127.0.0.1",3000))
 s.send(ciphertext)
+ciphertext = s.recv(BUFFER_SIZE)
+data = fernet_obj.decrypt(ciphertext)
+response = json.loads(data)
+print "response 1: " + json.dumps(response)
+ciphertext = fernet_obj.encrypt(json_string)
+s.send(ciphertext)
+ciphertext = s.recv(BUFFER_SIZE)
+print ciphertext
+data = fernet_obj.decrypt(ciphertext)
+response = json.loads(data)
+print "response 2: " + json.dumps(response)
+
 s.close()
 
 
